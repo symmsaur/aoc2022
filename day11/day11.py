@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import math
+
 
 def parse_op(op_str):
     if op_str == "old * old":
@@ -27,7 +29,7 @@ class Monkey:
         return f"Monkey( items={self.items} test={self.test} true={self.dest_true} false={self.dest_false} )"
 
 
-def main():
+def read_monkeys():
     with open("input", encoding="utf8") as data:
         monkeys = []
         lines = []
@@ -39,9 +41,13 @@ def main():
                 lines.append(line)
         monkeys.append(Monkey(lines))
         lines = []
+    return monkeys
+
+
+def part_one():
+    monkeys = read_monkeys()
     for _ in range(20):
         for monkey in monkeys:
-            print(monkey)
             while monkey.items:
                 monkey.business += 1
                 worry = monkey.operation(monkey.items[0]) // 3
@@ -51,8 +57,33 @@ def main():
                 else:
                     monkeys[monkey.dest_false].items.append(worry)
     business = sorted([m.business for m in monkeys])
-    part_one = business[-1] * business[-2]
-    print(f"Part One: {part_one}")
+    res = business[-1] * business[-2]
+    print(f"Part One: {res}")
+
+
+def part_two():
+    monkeys = read_monkeys()
+    mod = math.lcm(*(m.test for m in monkeys))
+    for i in range(10000):
+        if not i % 1000:
+            print(f"Iteration {i}")
+        for monkey in monkeys:
+            while monkey.items:
+                monkey.business += 1
+                worry = monkey.operation(monkey.items[0]) % mod
+                monkey.items = monkey.items[1:]
+                if not worry % monkey.test:
+                    monkeys[monkey.dest_true].items.append(worry)
+                else:
+                    monkeys[monkey.dest_false].items.append(worry)
+    business = sorted([m.business for m in monkeys])
+    res = business[-1] * business[-2]
+    print(f"Part Two: {res}")
+
+
+def main():
+    part_one()
+    part_two()
 
 
 if __name__ == "__main__":
