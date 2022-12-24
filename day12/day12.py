@@ -3,31 +3,27 @@
 import queue
 
 
-def level(rows, pos):
-    if not 0 <= pos[0] < len(rows[0]):
-        return 1000
-    if not 0 <= pos[1] < len(rows):
-        return 1000
-    return rows[pos[1]][pos[0]]
+def neighbors(pos, dims):
+    return set(
+        p
+        for p in (
+            (pos[0] + 1, pos[1]),
+            (pos[0] - 1, pos[1]),
+            (pos[0], pos[1] + 1),
+            (pos[0], pos[1] - 1),
+        )
+        if 0 <= p[0] < dims[0] and 0 <= p[1] < dims[1]
+    )
 
 
-def neighbors(pos):
-    return {
-        (pos[0] + 1, pos[1]),
-        (pos[0] - 1, pos[1]),
-        (pos[0], pos[1] + 1),
-        (pos[0], pos[1] - 1),
-    }
-
-
-def dijkstra_dist(start, goals, check):
+def dijkstra_dist(start, goals, check, dims):
     visited = set()
     pending = queue.PriorityQueue()
     pending.put((0, start))
     distances = []
     while not pending.empty():
         dist, cur = pending.get()
-        cur_neighbors = neighbors(cur) - visited
+        cur_neighbors = neighbors(cur, dims) - visited
         for neighbor in cur_neighbors:
             if check(cur, neighbor):
                 if neighbor in goals:
@@ -52,24 +48,28 @@ def main():
                 else:
                     cols.append(l)
             rows.append(cols)
+    dims = (len(rows[0]), len(rows))
 
-    def can_step_up(cur, neighbor):
-        return level(rows, neighbor) - level(rows, cur) <= 1
+    def level(pos):
+        return rows[pos[1]][pos[0]]
 
-    part_one = dijkstra_dist(start, (goal,), can_step_up)[0]
+    part_one = dijkstra_dist(
+        start, (goal,), lambda cur, to: level(to) - level(cur) <= 1, dims
+    )[0]
     print(f"Part One: {part_one}")
     candidate_starts = []
     for y, cols in enumerate(rows):
         for x, c in enumerate(cols):
             if c == ord("a"):
                 candidate_starts.append((x, y))
-
-    def can_step_down(cur, neighbor):
-        if level(rows, neighbor) == 1000:
-            return False
-        return level(rows, cur) - level(rows, neighbor) <= 1
-
-    part_two = min(dijkstra_dist(goal, candidate_starts, can_step_down))
+    part_two = min(
+        dijkstra_dist(
+            goal,
+            candidate_starts,
+            lambda cur, to: level(cur) - level(to) <= 1,
+            dims,
+        )
+    )
     print(f"Part Two: {part_two}")
 
 
